@@ -78,7 +78,7 @@ export default function HomePage() {
           className="text-sm text-white font-semibold"
         > 
         ZOTNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
-        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZotNest analyzes what actually matters to students and ranks housing options intelligently.
+        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZOTNest analyzes what actually matters to students and ranks housing options intelligently.
         </motion.p>
 
         {/* Search */}
