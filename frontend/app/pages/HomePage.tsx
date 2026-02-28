@@ -1,19 +1,51 @@
-"use client";
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import ResultsPage from './results/page';
+import { motion } from "framer-motion";
+import HousingSources from "@/app/components/HousingSources";
+import { useEffect, useState } from "react";
 
+export default function HomePage() {
 
+    const taglineText = "Find student housing based on what you actually care about.";
 
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
+    const [query, setQuery] = useState("");
+    const [displayText, setDisplayText] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState('home');
 
-export default function PageController() {
-  const [page, setPage] = useState('home');
-  
+  // Typing animation for tagline
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayText(taglineText.slice(0, i + 1));
+      i++;
+      if (i === taglineText.length) clearInterval(interval);
+    }, 35);
 
-  return (
-<<<<<<< Updated upstream
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+
+    try {
+      await fetch(`${BACKEND_URL}/api/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({query: query.trim() }),
+      });
+    } catch (err) {
+      console.error("Search failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+    return (
+    <>
     <main className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
       
       {/* Animated dark gradient background */}
@@ -46,7 +78,7 @@ export default function PageController() {
           className="text-sm text-white font-semibold"
         > 
         ZOTNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
-        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZOTNest analyzes what actually matters to students and ranks housing options intelligently.
+        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZotNest analyzes what actually matters to students and ranks housing options intelligently.
         </motion.p>
 
         {/* Search */}
@@ -76,8 +108,6 @@ export default function PageController() {
         <HousingSources />
       </div>
     </main>
-=======
-    <HomePage />
->>>>>>> Stashed changes
-  );
-};
+        </>
+    )
+    };
