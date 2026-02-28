@@ -1,10 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from llm import LLM
 
 
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",   
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Query(BaseModel):
     query: str
@@ -23,5 +36,3 @@ async def read_query(user_query: Query):
     print(user_query.query)
     return user_query
 
-if __name__ == '__main__':
-    set_query(Query(query="Hello, World!"))

@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 const taglineText =
   "Find student housing based on what you actually care about.";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const [displayText, setDisplayText] = useState("");
@@ -30,10 +32,10 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      await fetch("/api/search", {
+      await fetch(`${BACKEND_URL}/api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({query: query.trim() }),
       });
     } catch (err) {
       console.error("Search failed:", err);
