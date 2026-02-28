@@ -59,13 +59,13 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-6xl font-bold text-white tracking-tight"
+          className="text-9xl font-bold text-neony tracking-tight"
         >
           ZotNest
         </motion.h1>
 
         {/* Typing tagline */}
-        <p className="mt-4 text-lg text-gray-300 min-h-[1.5em]">
+        <p className="text-6xl text-lg font-bold text-white min-h-[1.5em]">
           {displayText}
           <span className="animate-pulse">▍</span>
         </p>
@@ -94,12 +94,12 @@ export default function HomePage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. quiet studio near UCI under $1400"
-            className="w-full bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white font-bold placeholder-gray focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
           <button
             type="submit"
-            className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-lg font-semibold transition"
+            className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-lg font-bold transition"
           >
             {loading ? "Searching..." : "Search Housing"}
           </button>
