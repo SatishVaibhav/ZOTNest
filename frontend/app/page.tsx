@@ -1,6 +1,5 @@
 "use client";
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ResultsPage from './results/page';
 
@@ -13,71 +12,6 @@ export default function PageController() {
   
 
   return (
-<<<<<<< Updated upstream
-    <main className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-      
-      {/* Animated dark gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-indigo-950 animate-gradient" />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-2xl">
-        
-        {/* Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-9xl font-bold text-neony tracking-tight"
-        >
-          ZOTNest
-        </motion.h1>
-
-        {/* Typing tagline */}
-        <p className="text-base text-lg font-bold text-neonb min-h-[1.5em]">
-          {displayText}
-          <span className="animate-pulse">▍</span>
-        </p>
-
-        {/* Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-sm text-white font-semibold"
-        > 
-        ZOTNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
-        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZOTNest analyzes what actually matters to students and ranks housing options intelligently.
-        </motion.p>
-
-        {/* Search */}
-        <motion.form
-          onSubmit={handleSubmit}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="mt-10 w-full"
-        >
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. quiet studio near UCI under $1400"
-            className="w-full bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white font-bold placeholder-gray focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-
-          <button
-            type="submit"
-            className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-lg font-bold transition"
-          >
-            {loading ? "Searching..." : "Search Housing"}
-          </button>
-        </motion.form>
-
-        <HousingSources />
-      </div>
-    </main>
-=======
     <HomePage />
->>>>>>> Stashed changes
   );
 };
