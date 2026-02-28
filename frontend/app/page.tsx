@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import HousingSources from "@/components/HousingSources";
 
 const taglineText =
   "Find student housing based on what you actually care about.";
@@ -69,6 +70,17 @@ export default function HomePage() {
           <span className="animate-pulse">▍</span>
         </p>
 
+        {/* Description */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-6 text-white-400"
+        > 
+        ZotNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
+        Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZotNest analyzes what actually matters to students and ranks housing options intelligently.
+        </motion.p>
+
         {/* Search */}
         <motion.form
           onSubmit={handleSubmit}
@@ -92,6 +104,8 @@ export default function HomePage() {
             {loading ? "Searching..." : "Search Housing"}
           </button>
         </motion.form>
+
+        <HousingSources />
       </div>
     </main>
   );
