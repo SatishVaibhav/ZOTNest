@@ -1,51 +1,50 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from llm import LLM  # Make sure your llm.py is updated too!
 
-app = FastAPI()
+from llm import LLM
 
-# 1. Keep your CORS settings so the frontend can talk to you
-origins = ["http://localhost:3000"]
+app = FastAPI(title="ZOTNest Production API")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 2. Define what the data looks like
 class QueryRequest(BaseModel):
     query: str
 
-class PropertyResult(BaseModel):
-    location_name: str
-    review_reasoning: str
-    similarity: float
-
-# Initialize your logic engine
-# This is where your Supabase/AI connections live
 engine = LLM()
+
+@app.get("/")
+def health_check():
+    return {"status": "ZOTNest API is Live", "docs": "/docs"}
 
 @app.post("/api/query")
 async def get_recommendations(user_query: QueryRequest):
     """
-    This is the main search endpoint.
-    It takes text, turns it into a vector, and finds matches in Supabase.
+    Main Search: Matches what the Frontend 'ResultsClient.tsx' likely calls.
+    Expects JSON: {"query": "shuttle near campus"}
     """
-    print(f"Received query: {user_query.query}")
-    
-    # Use your LLM class to get real data from the database
-    results = engine.get_recommendations(user_query.query)
-    
-    return {"results": results}
+    print(f"🔍 Processing Query: {user_query.query}")
+    try:
+        results = engine.get_recommendations(user_query.query)
+        return {"results": results}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/property/{name}")
 async def get_details(name: str):
     """
-    Optional: Get all floor plans for a specific building when clicked
+    Specific lookup for when a user clicks an apartment card.
     """
-    details = engine.get_property_details(name)
-    return details
+    try:
+        details = engine.get_property_details(name) 
+        return details
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Property not found")
