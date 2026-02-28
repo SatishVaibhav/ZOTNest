@@ -39,6 +39,7 @@ async def get_recommendations(user_query: QueryRequest):
     
     # Use your LLM class to get real data from the database
     results = engine.get_recommendations(user_query.query)
+    print(results)
     
     return {"results": results}
 

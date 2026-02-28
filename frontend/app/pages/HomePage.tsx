@@ -7,6 +7,7 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [displayText, setDisplayText] = useState("");
+  const [results, setResults] = useState(null);
 
   const sentences = [
     "Find student housing based on what you actually care about.",
@@ -62,11 +63,20 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      await fetch(`${BACKEND_URL}/api/query`, {
+      const response = await fetch(`${BACKEND_URL}/api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: query.trim() }),
       });
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log("Received from backend:", data);
+      setResults(data);
+      
+      
+
     } catch (err) {
       console.error("Search failed:", err);
     } finally {
