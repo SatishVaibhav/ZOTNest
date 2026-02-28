@@ -61,11 +61,11 @@ export default function HomePage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-9xl font-bold text-neony tracking-tight"
         >
-          ZotNest
+          ZOTNest
         </motion.h1>
 
         {/* Typing tagline */}
-        <p className="text-base text-lg font-bold text-white min-h-[1.5em]">
+        <p className="text-base text-lg font-bold text-neonb min-h-[1.5em]">
           {displayText}
           <span className="animate-pulse">▍</span>
         </p>
@@ -77,7 +77,7 @@ export default function HomePage() {
           transition={{ delay: 0.3, duration: 0.6 }}
           className="text-sm text-white font-semibold"
         > 
-        ZotNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
+        ZOTNest is a smart student housing discovery platform designed specifically for students near the University of California, Irvine.
         Instead of scrolling endlessly through listings on platforms like Zillow or browsing corporate communities such as American Campus Communities and Irvine Company, ZotNest analyzes what actually matters to students and ranks housing options intelligently.
         </motion.p>
 
