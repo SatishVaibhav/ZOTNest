@@ -1,11 +1,9 @@
 from llm import LLM
 
-# Initialize your brain
 brain = LLM()
 
-# Mock a user asking a question
 print("")
-results = brain.get_recommendations("")
+results = brain.get_recommendations("somewhere close to campus that's quiet")
 
 if results:
     for i, res in enumerate(results):

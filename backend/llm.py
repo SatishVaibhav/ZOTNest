@@ -26,13 +26,10 @@ class LLM:
         return response.json()["embedding"]["values"]
 
     def get_recommendations(self, user_query: str):
-        # 1. Guardrail: If query is empty, don't call the API
         if not user_query.strip():
             print("Empty query received. Returning default results.")
-            # Optional: You could fetch top properties here instead of returning []
             return []
 
-        # 2. Existing logic
         query_vector = self.get_embedding(user_query)
 
         response = self.supabase.rpc('match_properties', {
