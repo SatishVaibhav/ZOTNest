@@ -1,16 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from llm import LLM
-
-
+from typing import List, Optional
+from llm import LLM  # Make sure your llm.py is updated too!
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",   
-]
-
+# 1. Keep your CORS settings so the frontend can talk to you
+origins = ["http://localhost:3000"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -19,20 +16,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Query(BaseModel):
+# 2. Define what the data looks like
+class QueryRequest(BaseModel):
     query: str
 
+class PropertyResult(BaseModel):
+    location_name: str
+    review_reasoning: str
+    similarity: float
 
+# Initialize your logic engine
+# This is where your Supabase/AI connections live
+engine = LLM()
 
+@app.post("/api/query")
+async def get_recommendations(user_query: QueryRequest):
+    """
+    This is the main search endpoint.
+    It takes text, turns it into a vector, and finds matches in Supabase.
+    """
+    print(f"Received query: {user_query.query}")
+    
+    # Use your LLM class to get real data from the database
+    results = engine.get_recommendations(user_query.query)
+    
+    return {"results": results}
 
-@app.post("/api/query", response_model=Query)
-async def set_query(user_query: Query):
-    llm = LLM(user_query.query)
-    print('Query:', llm.get_query())
-    return user_query
-
-@app.get("/api/results", response_model=Query)
-async def read_query(user_query: Query):
-    print(user_query.query)
-    return user_query
-
+@app.get("/api/property/{name}")
+async def get_details(name: str):
+    """
+    Optional: Get all floor plans for a specific building when clicked
+    """
+    details = engine.get_property_details(name)
+    return details
