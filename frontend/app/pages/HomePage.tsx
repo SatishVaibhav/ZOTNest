@@ -21,7 +21,7 @@ export default function HomePage() {
     let charIndex = 0;
     let forward = true;
 
-    const typingSpeed = 150;    // typing speed
+    const typingSpeed = 10;    // typing speed
     const deletingSpeed = 50;   // faster deletion
     const pauseDuration = 2000; // pause at end of sentence
     let timeout: NodeJS.Timeout;
@@ -94,9 +94,10 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-9xl font-bold text-neony tracking-tight text-center"
+          className="text-9xl font-bold text-yellow-300 tracking-tight text-center"
         >
-          ZOTNest
+           <span>ZOT</span>
+           <span className="text-blue-900">Nest</span>
         </motion.h1>
 
         {/* Typing tagline left-aligned */}
@@ -111,7 +112,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-sm text-white font-semibold mt-6 text-left"
+          className="text-sm text-white font-semibold mt-6 text-center"
         >
           ZOTNest is a smart student housing discovery platform designed specifically
           for students near the University of California, Irvine. Instead of scrolling
@@ -134,12 +135,14 @@ export default function HomePage() {
             placeholder="e.g. quiet studio near UCI under $1400"
             className="w-full bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white font-bold placeholder-gray focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-         <button
-  type="submit"
-  className="mt-4 w-full bg-gradient-to-r from-blue-500/70 to-green-500/70 text-white py-3 rounded-xl text-lg font-bold transition hover:from-indigo-500/90 hover:to-purple-500/90"
->
-  {loading ? "Searching..." : "Search Housing"}
-</button>
+<div className="mt-4 w-full rounded-xl bg-blue-600 p-1">
+  <button
+    type="submit"
+    className="w-full bg-gradient-to-r from-yellow-300/90 to-blue-900/90 text-white py-3 rounded-xl text-lg font-bold transition hover:from-pink-500/70 hover:to-purple-500/70"
+  >
+    {loading ? "Searching..." : "Search Housing"}
+  </button>
+</div>
         </motion.form>
 
         <HousingSources />
