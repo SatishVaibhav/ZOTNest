@@ -17,7 +17,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: (markerShadow as any).src ?? markerShadow,
 });
 
-// Helper component to handle map panning
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   map.setView([lat, lng], 15);
@@ -26,18 +25,18 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
 
 const COORDS_BY_LOCATION: Record<string, { lat: number; lng: number }> = {
   Aldrich: { lat: 33.6461, lng: -117.8427 },
-  "Plaza Verde": { lat: 33.647992890412965, lng: -117.82901779024394 },
-  "Plaza Verde II": { lat: 33.64877726944328, lng: -117.82681344173186 },
-  "VDC Norte": { lat: 33.64693005928019, lng: -117.82366410112326 },
-  "Camino Del Sol": { lat: 33.644715041285316, lng: -117.82489791720157 },
-  "Vista Del Campo": { lat: 33.64034735896951, lng: -117.8240181526251 },
-  "Puerta Del Sol": { lat: 33.64821720903248, lng: -117.83215642142689 },
-  "Cornell Court": { lat: 33.648771010152096, lng: -117.83423791741171 },
-  "Columbia Court": { lat: 33.65193829556482, lng: -117.82828514111182 },
-  "Stanford Court": { lat: 33.65327800948177, lng: -117.84052185345652 },
-  "Dartmouth Court": { lat: 33.65197430512281, lng: -117.83753731051367 },
-  "Berkeley Court": { lat: 33.649034017585585, lng: -117.83711056962204 },
-  "Harvard Court": { lat: 33.65035828928843, lng: -117.83456518556835 },
+  "Plaza Verde": { lat: 33.64799, lng: -117.82901 },
+  "Plaza Verde II": { lat: 33.64877, lng: -117.82681 },
+  "VDC Norte": { lat: 33.64693, lng: -117.82366 },
+  "Camino Del Sol": { lat: 33.64471, lng: -117.82489 },
+  "Vista Del Campo": { lat: 33.64034, lng: -117.82401 },
+  "Puerta Del Sol": { lat: 33.64821, lng: -117.83215 },
+  "Cornell Court": { lat: 33.64877, lng: -117.83423 },
+  "Columbia Court": { lat: 33.65193, lng: -117.82828 },
+  "Stanford Court": { lat: 33.65327, lng: -117.84052 },
+  "Dartmouth Court": { lat: 33.65197, lng: -117.83753 },
+  "Berkeley Court": { lat: 33.64903, lng: -117.83711 },
+  "Harvard Court": { lat: 33.65035, lng: -117.83456 },
 };
 
 export type ResultRow = {
@@ -61,19 +60,78 @@ function formatMoney(n?: number) {
   });
 }
 
+/* ---------- SCORE COLOR ---------- */
+
+function clamp01(x: number) {
+  return Math.max(0, Math.min(1, x));
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function scoreToHexColor(t: number) {
+  const tt = clamp01(t);
+  const r = Math.round(lerp(220, 34, tt));
+  const g = Math.round(lerp(53, 197, tt));
+  const b = Math.round(lerp(69, 94, tt));
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function makeColorIcon(color: string) {
+  return L.divIcon({
+    className: "",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:2px solid #fff;"></div>`,
+  });
+}
+
+function makeSelectedIcon(color: string) {
+  return L.divIcon({
+    className: "",
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    html: `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:4px solid #000;"></div>`,
+  });
+}
+
+/* ---------- COMPONENT ---------- */
+
 export default function HousingMapClient({ results }: { results: any }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<keyof ResultRow>("final_score");
   const [activeCoords, setActiveCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [isFloorPlanOpen, setIsFloorPlanOpen] = useState(false);
+  const [floorPlanModalSrc, setFloorPlanModalSrc] = useState<string | null>(null);
 
   const resultsArray: ResultRow[] = useMemo(() => {
     if (Array.isArray(results)) return results;
-    if (results && typeof results === "object") return Object.values(results) as ResultRow[];
+    if (results && typeof results === "object") return Object.values(results);
     return [];
   }, [results]);
 
+  /* ---------- Price Filter ---------- */
+
+  const prices = resultsArray
+    .map((r) => r.price)
+    .filter((p): p is number => typeof p === "number");
+
+  const priceMin = prices.length ? Math.min(...prices) : 0;
+  const priceMax = prices.length ? Math.max(...prices) : 5000;
+
+  const effectiveMax = maxPrice ?? priceMax;
+
+  const filtered = resultsArray.filter((r) =>
+    typeof r.price === "number" ? r.price <= effectiveMax : true
+  );
+
+  /* ---------- Sidebar List ---------- */
+
   const sidebarList = useMemo(() => {
-    let list = [...resultsArray];
+    let list = [...filtered];
 
     if (searchTerm) {
       list = list.filter((r) =>
@@ -91,49 +149,91 @@ export default function HousingMapClient({ results }: { results: any }) {
     });
 
     return list;
-  }, [resultsArray, searchTerm, sortBy]);
+  }, [filtered, searchTerm, sortBy]);
+
+  /* ---------- Markers ---------- */
 
   const markers = useMemo(() => {
-    const bestByLocation = new Map<string, ResultRow>();
+    const best = new Map<string, ResultRow>();
 
-    for (const r of resultsArray) {
-      if (!r?.location_name) continue;
-
-      const prev = bestByLocation.get(r.location_name);
+    for (const r of filtered) {
+      const prev = best.get(r.location_name);
       if (!prev || (r.final_score ?? 0) > (prev.final_score ?? 0)) {
-        bestByLocation.set(r.location_name, r);
+        best.set(r.location_name, r);
       }
     }
 
-    return Array.from(bestByLocation.values())
+    return Array.from(best.values())
       .map((r) => ({
         id: r.location_name,
         ...COORDS_BY_LOCATION[r.location_name],
         ...r,
       }))
       .filter((m) => m.lat);
-  }, [resultsArray]);
+  }, [filtered]);
+
+  const scoreRange = useMemo(() => {
+    const scores = markers
+      .map((m) => m.final_score)
+      .filter((s): s is number => typeof s === "number");
+
+    if (!scores.length) return { min: 0, max: 1 };
+
+    return { min: Math.min(...scores), max: Math.max(...scores) };
+  }, [markers]);
+
+  const getIcon = (score?: number, selected?: boolean) => {
+    if (typeof score !== "number") return undefined;
+    const t =
+      scoreRange.max === scoreRange.min
+        ? 1
+        : (score - scoreRange.min) / (scoreRange.max - scoreRange.min);
+    const color = scoreToHexColor(t);
+    return selected ? makeSelectedIcon(color) : makeColorIcon(color);
+  };
+
+  const selected = markers.find((m) => m.id === selectedId);
+
+  /* ---------- UI ---------- */
 
   return (
     <div className="flex h-screen w-full overflow-hidden rounded-3xl m-4 shadow-2xl">
-      
+      {/* FLOOR PLAN MODAL */}
+      {floorPlanModalSrc && (
+        <div
+          onClick={() => setFloorPlanModalSrc(null)}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+        >
+          <img
+            src={floorPlanModalSrc}
+            className="max-h-[90vh] max-w-[90vw] bg-white rounded-xl"
+          />
+        </div>
+      )}
+
       {/* MAP */}
       <div className="flex-1 rounded-l-3xl overflow-hidden">
-        <MapContainer
-          center={[33.645, -117.835]}
-          zoom={14}
-          className="h-full w-full"
-        >
+        <MapContainer center={[33.645, -117.835]} zoom={14} className="h-full w-full">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {activeCoords && <RecenterMap {...activeCoords} />}
+
           {markers.map((m) => (
-            <Marker key={m.id} position={[m.lat!, m.lng!]}>
+            <Marker
+              key={m.id}
+              position={[m.lat, m.lng]}
+              icon={getIcon(m.final_score, selectedId === m.id)}
+              eventHandlers={{
+                click: () => {
+                  setSelectedId(m.id);
+                  setActiveCoords({ lat: m.lat, lng: m.lng });
+                  setIsFloorPlanOpen(false);
+                },
+              }}
+            >
               <Popup>
-                <div className="text-black">
-                  <b>{m.location_name}</b>
-                  <br />
-                  {formatMoney(m.price)}
-                </div>
+                <b>{m.location_name}</b>
+                <br />
+                {formatMoney(m.price)}
               </Popup>
             </Marker>
           ))}
@@ -142,41 +242,50 @@ export default function HousingMapClient({ results }: { results: any }) {
 
       {/* SIDEBAR */}
       <div className="w-[420px] flex flex-col border-l border-white/20 bg-gradient-to-br from-blue-400 to-green-400 rounded-r-3xl">
-        
-        {/* Header */}
         <div className="p-6 border-b border-white/20 backdrop-blur-md">
-          <h1 className="text-xl font-semibold mb-4 tracking-tight text-white">
+          <h1 className="text-xl font-semibold mb-4 text-white">
             Apartment Discovery
           </h1>
 
           <input
-            placeholder="Search communities..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-3 rounded-lg border border-white/40 bg-white/80 backdrop-blur-md text-black text-sm mb-3 outline-none focus:ring-2 focus:ring-white/60"
+            className="w-full p-3 rounded-lg bg-white/80 text-black mb-3"
           />
 
-          <div className="text-sm flex gap-2 items-center text-white">
-            <span className="opacity-80">Sort by</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent font-semibold cursor-pointer outline-none text-white"
-            >
-              <option value="final_score" className="text-black">
-                Final Score
-              </option>
-              <option value="price" className="text-black">
-                Price
-              </option>
-              <option value="distance_mi" className="text-black">
-                Distance
-              </option>
-            </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-transparent text-white font-semibold"
+          >
+            <option value="final_score" className="text-black">
+              Final Score
+            </option>
+            <option value="price" className="text-black">
+              Price
+            </option>
+            <option value="distance_mi" className="text-black">
+              Distance
+            </option>
+          </select>
+
+          {/* Price Slider */}
+          <div className="mt-4">
+            <div className="text-xs text-white mb-1">
+              Max Price: {formatMoney(effectiveMax)}
+            </div>
+            <input
+              type="range"
+              min={priceMin}
+              max={priceMax}
+              value={effectiveMax}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+              className="w-full"
+            />
           </div>
         </div>
 
-        {/* Scroll Area */}
         <div className="flex-1 overflow-y-auto p-3">
           {sidebarList.map((item, idx) => (
             <div
@@ -184,23 +293,16 @@ export default function HousingMapClient({ results }: { results: any }) {
               onClick={() => {
                 const coords = COORDS_BY_LOCATION[item.location_name];
                 if (coords) setActiveCoords(coords);
+                setSelectedId(item.location_name);
               }}
-              className="bg-white/90 backdrop-blur-md border border-white/40 rounded-xl p-4 mb-3 cursor-pointer transition-all duration-200 hover:border-black"
+              className="bg-white/90 rounded-xl p-4 mb-3 cursor-pointer"
             >
-              {item.image_path && (
-                <img
-                  src={item.image_path}
-                  alt=""
-                  className="w-full h-40 object-cover rounded-lg mb-3"
-                />
-              )}
-
-              <div className="flex justify-between items-baseline">
-                <span className="text-lg font-bold text-black">
+              <div className="flex justify-between">
+                <span className="font-bold text-black">
                   {formatMoney(item.price)}
                 </span>
-                <span className="text-xs font-semibold text-black bg-gray-200 px-2 py-1 rounded">
-                  Score: {item.final_score?.toFixed(1)}
+                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                  {item.final_score?.toFixed(1)}
                 </span>
               </div>
 
@@ -208,14 +310,30 @@ export default function HousingMapClient({ results }: { results: any }) {
                 {item.location_name}
               </div>
 
-              <div className="text-xs text-gray-600 mt-1">
-                {item.plan_name} • {item.distance_mi} mi
-              </div>
+              {selectedId === item.location_name && selected && (
+                <div className="mt-3 text-xs text-black">
+                  <div>Distance: {selected.distance_mi} mi</div>
+                  <div>Shuttle: {selected.has_shuttle ? "Yes" : "No"}</div>
 
-              {item.review_reasoning && (
-                <p className="text-xs text-gray-700 mt-3 border-t border-gray-200 pt-2 leading-relaxed">
-                  {item.review_reasoning}
-                </p>
+                  {selected.image_path && (
+                    <>
+                      <button
+                        onClick={() => setIsFloorPlanOpen(!isFloorPlanOpen)}
+                        className="mt-2 underline"
+                      >
+                        {isFloorPlanOpen ? "Hide Floor Plan" : "Show Floor Plan"}
+                      </button>
+
+                      {isFloorPlanOpen && (
+                        <img
+                          src={selected.image_path}
+                          onClick={() => setFloorPlanModalSrc(selected.image_path!)}
+                          className="mt-2 rounded-lg cursor-zoom-in"
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           ))}
