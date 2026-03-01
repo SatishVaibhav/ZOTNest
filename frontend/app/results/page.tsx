@@ -22,7 +22,7 @@ export default function ResultsPage() {
               transition={{ duration: 0.6 }}
               className="text-5xl font-bold text-yellow-300 mb-8 text-center"
             >
-              No results yet. Try searching first.
+              No results yet! Try searching first!
             </motion.h1>
           </div>
         </main>
