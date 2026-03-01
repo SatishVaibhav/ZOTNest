@@ -34,7 +34,7 @@ export default function HousingSources() {
         {[...items, ...items].map((item, index) => (
           <div
             key={index}
-            className="min-w-[260px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-white text-lg font-semibold shadow-lg"
+            className="min-w-[260px] bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-black text-lg font-semibold shadow-lg"
           >
             {item}
           </div>
