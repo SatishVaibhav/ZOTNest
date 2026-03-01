@@ -1,10 +1,11 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import "leaflet/dist/leaflet.css";
 
-// Fix default marker icons in bundlers
+// Fix default marker icons
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -15,6 +16,13 @@ L.Icon.Default.mergeOptions({
   iconUrl: (markerIcon as any).src ?? markerIcon,
   shadowUrl: (markerShadow as any).src ?? markerShadow,
 });
+
+// Helper component to handle map panning
+function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  map.setView([lat, lng], 15);
+  return null;
+}
 
 const COORDS_BY_LOCATION: Record<string, { lat: number; lng: number }> = {
   Aldrich: { lat: 33.6461, lng: -117.8427 },
@@ -41,7 +49,7 @@ export type ResultRow = {
   has_shuttle?: boolean;
   year_built?: number;
   review_reasoning?: string;
-  image_path?: string; // e.g. "/Cornell_Plan_A.jpeg" (must exist in /public)
+  image_path?: string;
 };
 
 function formatMoney(n?: number) {
@@ -53,120 +61,128 @@ function formatMoney(n?: number) {
   });
 }
 
+const ANTHROPIC_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
+
 export default function HousingMapClient({ results }: { results: any }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<keyof ResultRow>("final_score");
+  const [activeCoords, setActiveCoords] = useState<{ lat: number; lng: number } | null>(null);
+
   const resultsArray: ResultRow[] = useMemo(() => {
     if (Array.isArray(results)) return results;
-    if (results && typeof results === "object")
-      return Object.values(results) as ResultRow[];
+    if (results && typeof results === "object") return Object.values(results) as ResultRow[];
     return [];
   }, [results]);
 
-  console.log(
-    "Results array In HousingClient:",
-    resultsArray,
-    "results",
-    results,
-    "length",
-    resultsArray.length,
-    "image_path example",
-    resultsArray[0]?.image_path
-  );
+  const sidebarList = useMemo(() => {
+    let list = [...resultsArray];
+    if (searchTerm) {
+      list = list.filter((r) => r.location_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    list.sort((a, b) => {
+      const valA = a[sortBy] ?? 0;
+      const valB = b[sortBy] ?? 0;
+      return sortBy === "price" || sortBy === "distance_mi" 
+        ? (valA as number) - (valB as number) 
+        : (valB as any) - (valA as any);
+    });
+    return list;
+  }, [resultsArray, searchTerm, sortBy]);
 
-  // ✅ Only show the highest-scoring apartment in each community
   const markers = useMemo(() => {
     const bestByLocation = new Map<string, ResultRow>();
-
     for (const r of resultsArray) {
       if (!r?.location_name) continue;
-
       const prev = bestByLocation.get(r.location_name);
-
-      const score = typeof r.final_score === "number" ? r.final_score : -Infinity;
-      const prevScore =
-        typeof prev?.final_score === "number" ? prev.final_score : -Infinity;
-
-      // Keep the higher score (ties: keep the first one; use >= to keep the last one)
-      if (!prev || score > prevScore) {
-        bestByLocation.set(r.location_name, r);
-      }
+      if (!prev || (r.final_score ?? 0) > (prev.final_score ?? 0)) bestByLocation.set(r.location_name, r);
     }
-
-    return Array.from(bestByLocation.values())
-      .map((r) => {
-        const coords = COORDS_BY_LOCATION[r.location_name];
-        if (!coords) return null;
-
-        return {
-          id: `${r.location_name}-${r.plan_name ?? "best"}`,
-          ...coords,
-          ...r,
-        };
-      })
-      .filter(Boolean) as Array<ResultRow & { id: string; lat: number; lng: number }>;
+    return Array.from(bestByLocation.values()).map((r) => ({
+      id: r.location_name,
+      ...COORDS_BY_LOCATION[r.location_name],
+      ...r,
+    })).filter(m => m.lat);
   }, [resultsArray]);
 
   return (
-    <MapContainer
-      center={[33.6405, -117.8443]}
-      zoom={14}
-      style={{ height: "70vh", width: "100%" }}
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", fontFamily: ANTHROPIC_FONT, color: "#000" }}>
+      
+      {/* MAP */}
+      <div style={{ flex: 1 }}>
+        <MapContainer center={[33.645, -117.835]} zoom={14} style={{ height: "100%", width: "100%" }}>
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {activeCoords && <RecenterMap {...activeCoords} />}
+          {markers.map((m) => (
+            <Marker key={m.id} position={[m.lat!, m.lng!]}>
+              <Popup>
+                <div style={{ color: "#000", fontFamily: ANTHROPIC_FONT }}>
+                  <b style={{ fontSize: "14px" }}>{m.location_name}</b><br/>
+                  {formatMoney(m.price)}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
 
-      {markers.map((m) => (
-        <Marker key={m.id} position={[m.lat, m.lng]}>
-          <Popup>
-            <div style={{ maxWidth: 260 }}>
-              <div style={{ fontWeight: 800 }}>{m.location_name}</div>
+      {/* SIDEBAR */}
+      <div style={{ width: "420px", borderLeft: "1px solid #e5e5e5", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
+        <div style={{ padding: "24px", borderBottom: "1px solid #eee" }}>
+          <h1 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", letterSpacing: "-0.02em" }}>Apartment Discovery</h1>
+          <input 
+            placeholder="Search communities..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: "100%", padding: "12px", border: "1px solid #ddd", borderRadius: "8px", outline: "none", fontSize: "14px", marginBottom: "12px" }}
+          />
+          <div style={{ fontSize: "13px", display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ color: "#666" }}>Sort by</span>
+            <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value as any)}
+                style={{ border: "none", fontWeight: 600, fontSize: "13px", cursor: "pointer", outline: "none", color: "#000" }}
+            >
+              <option value="final_score">Final Score</option>
+              <option value="price">Price</option>
+              <option value="distance_mi">Distance</option>
+            </select>
+          </div>
+        </div>
 
-              {m.plan_name && (
-                <div style={{ fontWeight: 600, marginTop: 2 }}>{m.plan_name}</div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px", backgroundColor: "#fafafa" }}>
+          {sidebarList.map((item, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => {
+                const coords = COORDS_BY_LOCATION[item.location_name];
+                if (coords) setActiveCoords(coords);
+              }}
+              style={{ 
+                backgroundColor: "#fff", border: "1px solid #e5e5e5", borderRadius: "12px", padding: "16px", marginBottom: "12px", 
+                cursor: "pointer", transition: "all 0.2s ease" 
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#000")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e5e5")}
+            >
+              {item.image_path && (
+                <img src={item.image_path} alt="" style={{ width: "100%", height: "160px", objectFit: "cover", borderRadius: "8px", marginBottom: "12px" }} />
               )}
-
-              <div style={{ marginTop: 8 }}>
-                <div>
-                  <b>Score:</b>{" "}
-                  {typeof m.final_score === "number"
-                    ? m.final_score.toFixed(1)
-                    : "—"}
-                </div>
-                <div>
-                  <b>Price:</b> {formatMoney(m.price)}
-                </div>
-                <div>
-                  <b>Distance:</b>{" "}
-                  {typeof m.distance_mi === "number"
-                    ? `${m.distance_mi} mi`
-                    : "—"}
-                </div>
-                <div>
-                  <b>Shuttle:</b> {m.has_shuttle ? "Yes" : "No"}
-                </div>
-                <div>
-                  <b>Year built:</b> {m.year_built ?? "—"}
-                </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: "18px", fontWeight: 700 }}>{formatMoney(item.price)}</span>
+                <span style={{ fontSize: "12px", fontWeight: 600, color: "#000", background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px" }}>
+                  Score: {item.final_score?.toFixed(1)}
+                </span>
               </div>
-
-              {m.review_reasoning && (
-                <div style={{ marginTop: 10 }}>
-                  <b>Why:</b> {m.review_reasoning}
-                </div>
-              )}
-
-              {m.image_path && (
-                <img
-                  src={m.image_path}
-                  alt={`${m.location_name} plan`}
-                  style={{ width: "50%", borderRadius: 10, marginTop: 10 }}
-                />
+              <div style={{ fontSize: "14px", fontWeight: 600, marginTop: "4px" }}>{item.location_name}</div>
+              <div style={{ fontSize: "13px", color: "#666", marginTop: "2px" }}>{item.plan_name} • {item.distance_mi} mi</div>
+              {item.review_reasoning && (
+                <p style={{ fontSize: "12px", color: "#444", marginTop: "12px", lineHeight: "1.5", borderTop: "1px solid #f0f0f0", paddingTop: "8px" }}>
+                  {item.review_reasoning}
+                </p>
               )}
             </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

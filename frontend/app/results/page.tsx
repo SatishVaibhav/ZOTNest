@@ -50,7 +50,7 @@ export default function ResultsPage() {
           </motion.h1>
 
           {/* Results Client / Map */}
-          <div className="w-full h-[80vh]"> {/* Ensure map takes enough height */}
+          <div className="w-full h-[100vh]"> {/* Ensure map takes enough height */}
             <ResultsClient results={results.results} />
           </div>
         </div>
