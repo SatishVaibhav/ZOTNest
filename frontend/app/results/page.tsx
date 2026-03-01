@@ -2,23 +2,43 @@
 import ResultsClient from "./ResultsClient";
 import { motion } from "framer-motion";
 import { useSearch } from "@/app/context/SearchContext";
+import Navbar from "@/app/components/NavBar";
 
 export default function ResultsPage() {
-    const { results } = useSearch();
-    if (!results) {
-        return <p>No results yet. Try searching first.</p>;
-    }
-    console.log("Results in ResultsPage:", results);
+  const { results } = useSearch();
+  if (!results) {
+    return <p>No results yet. Try searching first.</p>;
+  }
+  console.log("Results in ResultsPage:", results);
 
-    return (
-        <main className="relative min-h-screen p-6">
+  return (
+    <>
+      {/* Navbar at the top */}
+      <Navbar />
+
+      <main className="relative min-h-screen p-6 pt-20">
+        {/* pt-20 = push content below fixed navbar */}
+
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-green-400"/>
-        {/* Title */}
-        <h1 className="text-center text-yellow-300 text-6xl font-bold mb-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-green-400" />
+
+        <div className="relative z-10 max-w-7xl mx-auto">
+          {/* Page Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-5xl font-bold text-yellow-300 mb-8 text-center"
+          >
             Results
-        </h1>
-        <ResultsClient results={results} />
-        </main>
-    );
+          </motion.h1>
+
+          {/* Results Client / Map */}
+          <div className="w-full h-[80vh]"> {/* Ensure map takes enough height */}
+            <ResultsClient results={results} />
+          </div>
+        </div>
+      </main>
+    </>
+  );
 }

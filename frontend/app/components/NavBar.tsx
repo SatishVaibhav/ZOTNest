@@ -6,13 +6,13 @@ import Link from "next/link";
 const Navbar: React.FC = () => {
   return (
     <nav className="fixed w-full z-10 bg-gray-200/40 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-0"> {/* Remove left/right padding */}
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo flush to the left */}
           <img
             src="/logo.png"
             alt="Logo"
-            className="w-14 h-auto"
+            className="w-14 h-auto ml-[-90]" // small left margin if needed
           />
 
           {/* Centered Desktop Links */}
