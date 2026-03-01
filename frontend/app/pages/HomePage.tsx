@@ -88,6 +88,12 @@ export default function HomePage() {
     <main className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-green-200" />
 
+     <img
+  src="/logo.png"
+  alt=""
+  className="fixed top-4 left-4 w-18 h-auto"
+  />
+
       <div className="relative z-10 flex flex-col items-center max-w-2xl">
         {/* Title centered */}
         <motion.h1
