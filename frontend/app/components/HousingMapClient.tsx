@@ -61,8 +61,6 @@ function formatMoney(n?: number) {
   });
 }
 
-const ANTHROPIC_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
-
 export default function HousingMapClient({ results }: { results: any }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<keyof ResultRow>("final_score");
@@ -76,46 +74,64 @@ export default function HousingMapClient({ results }: { results: any }) {
 
   const sidebarList = useMemo(() => {
     let list = [...resultsArray];
+
     if (searchTerm) {
-      list = list.filter((r) => r.location_name.toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((r) =>
+        r.location_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
+
     list.sort((a, b) => {
       const valA = a[sortBy] ?? 0;
       const valB = b[sortBy] ?? 0;
-      return sortBy === "price" || sortBy === "distance_mi" 
-        ? (valA as number) - (valB as number) 
-        : (valB as any) - (valA as any);
+
+      return sortBy === "price" || sortBy === "distance_mi"
+        ? (valA as number) - (valB as number)
+        : (valB as number) - (valA as number);
     });
+
     return list;
   }, [resultsArray, searchTerm, sortBy]);
 
   const markers = useMemo(() => {
     const bestByLocation = new Map<string, ResultRow>();
+
     for (const r of resultsArray) {
       if (!r?.location_name) continue;
+
       const prev = bestByLocation.get(r.location_name);
-      if (!prev || (r.final_score ?? 0) > (prev.final_score ?? 0)) bestByLocation.set(r.location_name, r);
+      if (!prev || (r.final_score ?? 0) > (prev.final_score ?? 0)) {
+        bestByLocation.set(r.location_name, r);
+      }
     }
-    return Array.from(bestByLocation.values()).map((r) => ({
-      id: r.location_name,
-      ...COORDS_BY_LOCATION[r.location_name],
-      ...r,
-    })).filter(m => m.lat);
+
+    return Array.from(bestByLocation.values())
+      .map((r) => ({
+        id: r.location_name,
+        ...COORDS_BY_LOCATION[r.location_name],
+        ...r,
+      }))
+      .filter((m) => m.lat);
   }, [resultsArray]);
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden", fontFamily: ANTHROPIC_FONT, color: "#000" }}>
+    <div className="flex h-screen w-full overflow-hidden rounded-3xl m-4 shadow-2xl">
       
       {/* MAP */}
-      <div style={{ flex: 1 }}>
-        <MapContainer center={[33.645, -117.835]} zoom={14} style={{ height: "100%", width: "100%" }}>
+      <div className="flex-1 rounded-l-3xl overflow-hidden">
+        <MapContainer
+          center={[33.645, -117.835]}
+          zoom={14}
+          className="h-full w-full"
+        >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {activeCoords && <RecenterMap {...activeCoords} />}
           {markers.map((m) => (
             <Marker key={m.id} position={[m.lat!, m.lng!]}>
               <Popup>
-                <div style={{ color: "#000", fontFamily: ANTHROPIC_FONT }}>
-                  <b style={{ fontSize: "14px" }}>{m.location_name}</b><br/>
+                <div className="text-black">
+                  <b>{m.location_name}</b>
+                  <br />
                   {formatMoney(m.price)}
                 </div>
               </Popup>
@@ -125,57 +141,79 @@ export default function HousingMapClient({ results }: { results: any }) {
       </div>
 
       {/* SIDEBAR */}
-      <div style={{ width: "420px", borderLeft: "1px solid #e5e5e5", display: "flex", flexDirection: "column", backgroundColor: "#fff" }}>
-        <div style={{ padding: "24px", borderBottom: "1px solid #eee" }}>
-          <h1 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", letterSpacing: "-0.02em" }}>Apartment Discovery</h1>
-          <input 
-            placeholder="Search communities..." 
+      <div className="w-[420px] flex flex-col border-l border-white/20 bg-gradient-to-br from-blue-400 to-green-400 rounded-r-3xl">
+        
+        {/* Header */}
+        <div className="p-6 border-b border-white/20 backdrop-blur-md">
+          <h1 className="text-xl font-semibold mb-4 tracking-tight text-white">
+            Apartment Discovery
+          </h1>
+
+          <input
+            placeholder="Search communities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: "100%", padding: "12px", border: "1px solid #ddd", borderRadius: "8px", outline: "none", fontSize: "14px", marginBottom: "12px" }}
+            className="w-full p-3 rounded-lg border border-white/40 bg-white/80 backdrop-blur-md text-black text-sm mb-3 outline-none focus:ring-2 focus:ring-white/60"
           />
-          <div style={{ fontSize: "13px", display: "flex", gap: "8px", alignItems: "center" }}>
-            <span style={{ color: "#666" }}>Sort by</span>
-            <select 
-                value={sortBy} 
-                onChange={(e) => setSortBy(e.target.value as any)}
-                style={{ border: "none", fontWeight: 600, fontSize: "13px", cursor: "pointer", outline: "none", color: "#000" }}
+
+          <div className="text-sm flex gap-2 items-center text-white">
+            <span className="opacity-80">Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-transparent font-semibold cursor-pointer outline-none text-white"
             >
-              <option value="final_score">Final Score</option>
-              <option value="price">Price</option>
-              <option value="distance_mi">Distance</option>
+              <option value="final_score" className="text-black">
+                Final Score
+              </option>
+              <option value="price" className="text-black">
+                Price
+              </option>
+              <option value="distance_mi" className="text-black">
+                Distance
+              </option>
             </select>
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px", backgroundColor: "#fafafa" }}>
+        {/* Scroll Area */}
+        <div className="flex-1 overflow-y-auto p-3">
           {sidebarList.map((item, idx) => (
-            <div 
-              key={idx} 
+            <div
+              key={idx}
               onClick={() => {
                 const coords = COORDS_BY_LOCATION[item.location_name];
                 if (coords) setActiveCoords(coords);
               }}
-              style={{ 
-                backgroundColor: "#fff", border: "1px solid #e5e5e5", borderRadius: "12px", padding: "16px", marginBottom: "12px", 
-                cursor: "pointer", transition: "all 0.2s ease" 
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#000")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e5e5")}
+              className="bg-white/90 backdrop-blur-md border border-white/40 rounded-xl p-4 mb-3 cursor-pointer transition-all duration-200 hover:border-black"
             >
               {item.image_path && (
-                <img src={item.image_path} alt="" style={{ width: "100%", height: "160px", objectFit: "cover", borderRadius: "8px", marginBottom: "12px" }} />
+                <img
+                  src={item.image_path}
+                  alt=""
+                  className="w-full h-40 object-cover rounded-lg mb-3"
+                />
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: "18px", fontWeight: 700 }}>{formatMoney(item.price)}</span>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: "#000", background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px" }}>
+
+              <div className="flex justify-between items-baseline">
+                <span className="text-lg font-bold text-black">
+                  {formatMoney(item.price)}
+                </span>
+                <span className="text-xs font-semibold text-black bg-gray-200 px-2 py-1 rounded">
                   Score: {item.final_score?.toFixed(1)}
                 </span>
               </div>
-              <div style={{ fontSize: "14px", fontWeight: 600, marginTop: "4px" }}>{item.location_name}</div>
-              <div style={{ fontSize: "13px", color: "#666", marginTop: "2px" }}>{item.plan_name} • {item.distance_mi} mi</div>
+
+              <div className="text-sm font-semibold mt-1 text-black">
+                {item.location_name}
+              </div>
+
+              <div className="text-xs text-gray-600 mt-1">
+                {item.plan_name} • {item.distance_mi} mi
+              </div>
+
               {item.review_reasoning && (
-                <p style={{ fontSize: "12px", color: "#444", marginTop: "12px", lineHeight: "1.5", borderTop: "1px solid #f0f0f0", paddingTop: "8px" }}>
+                <p className="text-xs text-gray-700 mt-3 border-t border-gray-200 pt-2 leading-relaxed">
                   {item.review_reasoning}
                 </p>
               )}
