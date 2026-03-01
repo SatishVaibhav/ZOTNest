@@ -28,22 +28,22 @@ export default function HousingMapClient() {
       />
 
       <Marker position={[33.6461, -117.8427]}>
-        <Popup>Aldrich</Popup>
+        <Popup><b>Aldrich</b></Popup>
       </Marker>
       <Marker position={[33.647992890412965, -117.82901779024394]}>
-        <Popup>Plaza Verde</Popup>
+        <Popup><b>Plaza Verde</b></Popup>
       </Marker>
       <Marker position={[33.64693005928019, -117.82366410112326]}>
-        <Popup>Vista Del Campo Norte</Popup>
+        <Popup><b>Vista Del Campo Norte</b></Popup>
       </Marker>
       <Marker position={[33.644715041285316, -117.82489791720157]}>
-        <Popup>Camino Del Sol</Popup>
+        <Popup><b>Camino Del Sol</b></Popup>
       </Marker>
       <Marker position={[33.64034735896951, -117.8240181526251]}>
-        <Popup>Vista Del Campo</Popup>
+        <Popup><b>Vista Del Campo</b></Popup>
       </Marker>
       <Marker position={[33.64821720903248, -117.83215642142689]}>
-        <Popup>Puerta Del Sol</Popup>
+        <Popup><b>Puerta Del Sol</b></Popup>
       </Marker>
     </MapContainer>
   );

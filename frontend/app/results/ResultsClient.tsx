@@ -8,7 +8,7 @@ const HousingMap = dynamic(() => import("../components/HousingMapClient"), {
 
 export default function ResultsClient() {
   return (
-    <div style={{ marginTop: 16 }}>
+    <div style={{ marginTop: 40}}>
       <HousingMap />
     </div>
   );
