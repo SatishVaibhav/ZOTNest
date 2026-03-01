@@ -301,7 +301,7 @@ export default function HousingMapClient({ results }: { results: any }) {
                 <span className="font-bold text-black">
                   {formatMoney(item.price)}
                 </span>
-                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                <span className="text-xs bg-gray-200 px-2 py-1 rounded text-black">
                   {item.final_score?.toFixed(1)}
                 </span>
               </div>
