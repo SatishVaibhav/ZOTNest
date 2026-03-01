@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import HousingSources from "@/app/components/HousingSources";
 import { useEffect, useState } from "react";
+import { useSearch } from "../context/SearchContext";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [displayText, setDisplayText] = useState("");
-  const [results, setResults] = useState(null);
-
+  const { setResults } = useSearch();
+  
   const sentences = [
     "Find student housing based on what you actually care about.",
     "Discover apartments near UCI that match your lifestyle.",
@@ -74,6 +77,7 @@ export default function HomePage() {
       const data = await response.json();
       console.log("Received from backend:", data);
       setResults(data);
+      router.push("/results");
       
       
 
