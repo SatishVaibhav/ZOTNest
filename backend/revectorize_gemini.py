@@ -29,27 +29,35 @@ def get_embedding(text):
     )
     return response.json()["embedding"]["values"]
 
-
 def refresh_vectors():
     print("Fetching properties...")
-    response = supabase.table("properties").select("*").execute()
+    properties = supabase.table("properties").select("location_name, distance_mi, has_shuttle, year_built").execute()
 
-    for row in response.data:
-        name = row['location_name']
+    for prop in properties.data:
+        name = prop['location_name']
 
-        shuttle_status = "has a shuttle service" if row.get('has_shuttle') else "no shuttle"
-        distance = f"{row.get('distance_miles', 'unknown')} miles from UCI campus"
-        year = f"built in {row.get('year_built')}" if row.get('year_built') else ""
-        
+        reviews = supabase.table("google_reviews").select("review_text").eq("location_name", name).execute()
+        review_texts = [r['review_text'] for r in reviews.data if r.get('review_text')]
+
+        if not review_texts:
+            print(f"Skipping {name} (no reviews found)")
+            continue
+
+        shuttle_status = "has a shuttle service" if prop.get('has_shuttle') else "no shuttle"
+        distance = f"{prop.get('distance_mi', 'unknown')} miles from UCI campus"
+        year = f"built in {prop.get('year_built')}" if prop.get('year_built') else ""
+        combined_reviews = " | ".join(review_texts)
+
         combined_text = (
             f"Apartment: {name}. Location: {distance}. Features: {shuttle_status}, {year}. "
-            f"Resident feedback: {row['review_reasoning']}"
+            f"Resident reviews: {combined_reviews}"
         )
-        
-        print(f"Vectorizing {name} with Facts...")
+
+        print(f"Vectorizing {name} with {len(review_texts)} real reviews...")
         vector = get_embedding(combined_text)
-        
         supabase.table("properties").update({"vibe_vector": vector}).eq("location_name", name).execute()
+
+    print("\nDone! Vectors now based on real reviews.")
 
 if __name__ == "__main__":
     refresh_vectors()
