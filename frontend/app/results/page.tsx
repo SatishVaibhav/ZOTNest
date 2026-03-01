@@ -37,7 +37,7 @@ export default function ResultsPage() {
       <Navbar />
 
       <main className="relative min-h-screen p-6 pt-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-green-" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-green-400" />
 
         <div className="relative z-10 max-w-7xl mx-auto">
           <motion.h1
