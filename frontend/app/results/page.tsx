@@ -49,8 +49,14 @@ export default function ResultsPage() {
             Results
           </motion.h1>
 
+<<<<<<< Updated upstream
           <div className="w-full h-[80vh]">
             <ResultsClient results={results} />
+=======
+          {/* Results Client / Map */}
+          <div className="w-full h-[80vh]"> {/* Ensure map takes enough height */}
+            <ResultsClient results={results.results} />
+>>>>>>> Stashed changes
           </div>
         </div>
       </main>
