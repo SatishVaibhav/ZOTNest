@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import HousingSources from "@/app/components/HousingSources";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearch } from "../context/SearchContext";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/NavBar";
@@ -10,11 +10,13 @@ import Navbar from "@/app/components/NavBar";
 export default function HomePage() {
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [displayText, setDisplayText] = useState("");
   const { setResults } = useSearch();
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const sentences = [
     "Find student housing based on what you actually care about.",
@@ -23,6 +25,9 @@ export default function HomePage() {
     "ZOT ZOT ZOT",
   ];
 
+  /* =========================
+     Typing Animation
+  ========================== */
   useEffect(() => {
     let sentenceIndex = 0;
     let charIndex = 0;
@@ -59,11 +64,24 @@ export default function HomePage() {
     };
 
     type();
-
     return () => clearTimeout(timeout);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  /* =========================
+     Auto Grow Textarea
+  ========================== */
+  const autoGrow = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
+    }
+  };
+
+  /* =========================
+     Submit Handler
+  ========================== */
+  const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
@@ -81,7 +99,6 @@ export default function HomePage() {
       }
 
       const data = await response.json();
-      console.log("Received from backend:", data);
       setResults(data);
       router.push("/results");
     } catch (err) {
@@ -93,14 +110,13 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Navbar always at the top */}
       <Navbar />
 
       <main className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden pt-16">
-        {/* Darker gradient background */}
+        {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-green-400" />
 
-        <div className="relative z-10 flex flex-col items-center max-w-2xl">
+        <div className="relative z-10 flex flex-col items-center max-w-2xl w-full">
           {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -112,9 +128,9 @@ export default function HomePage() {
             <span className="text-blue-900">Nest</span>
           </motion.h1>
 
-          {/* Typing tagline */}
+          {/* Typing Tagline */}
           <div className="w-full mt-4">
-            <p className="text-base text-lg font-bold text-black min-h-[1.5em] text-left">
+            <p className="text-lg font-bold text-black min-h-[1.5em] text-left">
               {displayText}
               <span className="animate-pulse">▍</span>
             </p>
@@ -127,11 +143,11 @@ export default function HomePage() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="text-sm text-white font-semibold mt-6 text-center"
           >
-            ZOTNest is a smart student housing discovery platform designed specifically
-            for students near the University of California, Irvine. Instead of scrolling
-            endlessly through listings on platforms like Zillow or browsing corporate
-            communities, ZOTNest analyzes what actually matters to students and ranks
-            housing options intelligently.
+            ZOTNest is a smart student housing discovery platform designed
+            specifically for students near the University of California,
+            Irvine. Instead of scrolling endlessly through listings, ZOTNest
+            analyzes what actually matters to students and ranks housing
+            options intelligently.
           </motion.p>
 
           {/* Search Form */}
@@ -142,17 +158,29 @@ export default function HomePage() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-10 w-full"
           >
-            <input
-              type="text"
+            <textarea
+              ref={textareaRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              rows={1}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                autoGrow();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
               placeholder="e.g. quiet studio near UCI under $1400"
-              className="w-full bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white font-bold placeholder-gray focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full resize-none overflow-hidden bg-black/40 backdrop-blur border border-white/10 rounded-xl px-5 py-4 text-lg text-white font-bold placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
             />
+
             <div className="mt-4 w-full rounded-xl bg-blue-600 p-1">
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-yellow-300/90 to-blue-900/90 text-white py-3 rounded-xl text-lg font-bold transition hover:from-pink-500/70 hover:to-purple-500/70"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-yellow-300/90 to-blue-900/90 text-white py-3 rounded-xl text-lg font-bold transition hover:from-pink-500/70 hover:to-purple-500/70 disabled:opacity-50"
               >
                 {loading ? "Searching..." : "Search Housing"}
               </button>
