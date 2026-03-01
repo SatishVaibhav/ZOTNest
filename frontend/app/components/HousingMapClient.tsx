@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src ?? markerShadow,
 });
 
-export default function HousingMapClient() {
+export default function HousingMapClient({results} : {results: any}) {
   return (
     <MapContainer
       center={[33.6405, -117.8443]} // UCI-ish
@@ -26,7 +26,7 @@ export default function HousingMapClient() {
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-
+    
       <Marker position={[33.6461, -117.8427]}>
         <Popup><b>Aldrich</b></Popup>
       </Marker>

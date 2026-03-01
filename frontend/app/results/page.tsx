@@ -18,7 +18,7 @@ export default function ResultsPage() {
         <h1 className="text-center text-yellow-300 text-6xl font-bold mb-8">
             Results
         </h1>
-        <ResultsClient />
+        <ResultsClient results={results} />
         </main>
     );
 }
