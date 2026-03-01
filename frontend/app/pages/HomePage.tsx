@@ -24,8 +24,8 @@ export default function HomePage() {
     let charIndex = 0;
     let forward = true;
 
-    const typingSpeed = 10;    // typing speed
-    const deletingSpeed = 50;   // faster deletion
+    const typingSpeed = 50;    // typing speed
+    const deletingSpeed = 40;   // faster deletion
     const pauseDuration = 2000; // pause at end of sentence
     let timeout: NodeJS.Timeout;
 
