@@ -21,6 +21,7 @@ class QueryRequest(BaseModel):
 engine = LLM()
 
 @app.get("/")
+@app.head("/")
 def health_check():
     return {"status": "ZOTNest API is Live", "docs": "/docs"}
 
